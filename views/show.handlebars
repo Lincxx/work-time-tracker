@@ -1,0 +1,19 @@
+<div class="row">
+    {{#each items}}
+
+    <div class="col-sm-4">
+        <div class="card mt-4" style="width: 22rem;">
+            <div class="card-header">
+                <h4>{{date}}</h4>
+            </div>
+            <div class="card-body  mb-2">
+                <p>Minutes - {{minutes}}</p>
+            </div>
+        </div>
+    </div>
+
+    {{else}}
+
+    <p>No Date/Minutes listed</p>
+    {{/each}}
+</div>
