@@ -9,7 +9,14 @@ const AcquireTime = new Schema({
     minutes: {
         type:String,
         required:true
-    } 
+    }, 
+    day: {
+        type:String,
+        required:true
+    },
+    class: {
+        type:String
+    }
 })
 
 mongoose.model('acquireTime', AcquireTime)

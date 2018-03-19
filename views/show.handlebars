@@ -1,19 +1,28 @@
-<div class="row">
-    {{#each items}}
+<div class="row ">
+    <table class="table">
+        <thead class="thead-light">
+            <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Minutes</th>
 
-    <div class="col-sm-4">
-        <div class="card mt-4" style="width: 22rem;">
-            <div class="card-header">
-                <h4>{{date}}</h4>
-            </div>
-            <div class="card-body  mb-2">
-                <p>Minutes - {{minutes}}</p>
-            </div>
-        </div>
-    </div>
+            </tr>
+        </thead>
+        <tbody>
+        {{#each items}}
 
-    {{else}}
 
-    <p>No Date/Minutes listed</p>
-    {{/each}}
+        <tr class={{class}}>
+            <th>{{date}}</th>
+            <td>{{minutes}}</td>
+
+        </tr>
+
+
+        {{else}}
+
+        <p>No Date/Minutes listed</p>
+        {{/each}}
+        </tbody>
+    </table>
+
 </div>

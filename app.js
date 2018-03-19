@@ -4,6 +4,7 @@ const path =  require('path');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const moment = require('moment');
+require('dotenv').config();
 
 // Create app
 const app = express();
@@ -24,7 +25,7 @@ mongoose.Promise = global.Promise;
 
 
 //Connect to Mongoose
-mongoose.connect('mongodb://localhost/time-tracker', {
+mongoose.connect(process.env.mongoUIR, {
     //useMongoClient:true
 })
 .then(()=> console.log('MongoDB Connected'))
@@ -37,21 +38,25 @@ const AcquireTime = mongoose.model('acquireTime');
 
 // Routes
 app.get('/', (req, res)=>{
-    let today = moment().format('LL');;
+    let today = moment().format('LL');
     console.log(today)
     res.render('home', {today: today});
 });
 
 app.post('/addTime', (req, res) => {
     console.log(req.body)
+    const day = moment().format('dddd');
+    const newClass = day == 'Monday' ? 'table-info' : ''
     const newAcquireTime = ({
         date: req.body.date,
-        minutes: req.body.minutes
+        minutes: req.body.minutes,
+        day: day,
+        class: newClass
     });
 
     new AcquireTime(newAcquireTime).save()
         .then(item =>{
-            res.send('Time added');
+            res.redirect('/showDates');
         })
 });
 
@@ -59,6 +64,7 @@ app.post('/addTime', (req, res) => {
 app.get('/showDates', (req, res)=>{
     AcquireTime.find()
         .then(items => {
+            console.log(items)
             res.render('show',{items:items});
         })
     
