@@ -1,9 +1,15 @@
-const express = require('express');
-const exphbs = require('express-handlebars');
-const path =  require('path');
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
-const moment = require('moment');
+const express        = require('express');
+const exphbs         = require('express-handlebars');
+const path           =  require('path');
+const bodyParser     = require('body-parser');
+const mongoose       = require('mongoose');
+const moment         = require('moment');
+const bcrypt         = require('bcryptjs');
+const flash          = require('connect-flash');
+const session        = require('express-session');
+const passport       = require('passport')
+
+
 require('dotenv').config();
 
 // Create app
@@ -32,44 +38,164 @@ mongoose.connect(process.env.mongoUIR, {
 .catch( err => console.log(err));
 
 
-//Require the modle
+//Require the  A cquireTime Model
 require('./models/AcquireTime')
 const AcquireTime = mongoose.model('acquireTime');
 
+// Load User Model
+require('./models/Users');
+const User = mongoose.model('users');
+
+
+// Passport Config
+require('./config/passport')(passport);
+
+
+// Load helper
+const {ensureAuthenticated} = require('./helpers/auth')
+
+// Express Session Middleware
+app.use(session({
+    secret: 'secret',
+    resave: false,
+    saveUninitialized: true
+}));
+
+// Passport  Middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use(flash());
+
+//Global Variable Middleware
+app.use(function(req, res, next){
+    res.locals.success_msg = req.flash('success_msg');
+    res.locals.error_msg = req.flash('error_msg');
+    res.locals.error = req.flash('error');
+    res.locals.user = req.user || null;
+    next();
+});
+
+
 // Routes
 app.get('/', (req, res)=>{
+   //AcquireTime.find()
+    console.log(req.user.id)
     let today = moment().format('LL');
     console.log(today)
     res.render('home', {today: today});
 });
 
-app.post('/addTime', (req, res) => {
-    console.log(req.body)
+app.post('/addTime', ensureAuthenticated, (req, res) => {
     const day = moment().format('dddd');
     const newClass = day == 'Monday' ? 'table-info' : ''
     const newAcquireTime = ({
         date: req.body.date,
         minutes: req.body.minutes,
         day: day,
-        class: newClass
+        class: newClass,
+        user: req.user.id
     });
 
-    new AcquireTime(newAcquireTime).save()
-        .then(item =>{
-            res.redirect('/showDates');
-        })
+    res.send("there");
+    // new AcquireTime(newAcquireTime).save()
+    //     .then(item =>{
+    //         res.redirect('/showDates');
+    //     })
 });
 
 //Show all 
-app.get('/showDates', (req, res)=>{
-    AcquireTime.find()
+app.get('/showDates', ensureAuthenticated, (req, res)=>{
+    AcquireTime.find({user: req.user.id})
         .then(items => {
-            console.log(items)
+            //console.log(items)
             res.render('show',{items:items});
         })
     
 })
 
+
+// USERS
+// User Register Route
+app.get('/users/registration', (req, res)=>{
+    res.render('users/register');
+});
+
+// User Form Post
+app.post('/users/register', (req, res)=>{
+    //console.log(req.body)
+    let errors = [];
+    if(req.body.password !== req.body.password2){
+        errors.push({
+            text: 'Password do not match'
+        });
+    }
+
+    if(req.body.name == "" || req.body.email == ""){
+        errors.push({
+            text: 'Name or Email can not be blank'
+        });
+    }
+
+    if (errors.length > 0) {
+        res.render('users/register', {
+            errors: errors,
+            name: req.body.name,
+            email: req.body.email,
+            password: req.body.password,
+            password2: req.body.password2,
+        })
+    } else {
+        // Check for duplicate email 
+        User.findOne({email: req.body.email})
+            .then(user => {
+                if(user){
+                    req.flash('error_msg', 'Email is already taked');
+                    res.redirect('.users/register')
+                } else {
+                    var newUser = new User({
+                        name: req.body.name,
+                        email: req.body.email,
+                        password: req.body.password
+                    })
+
+                    //encrypt password
+                    bcrypt.genSalt(10, (err, salt) =>{
+                        bcrypt.hash(newUser.password, salt, (err, hash)=>{
+                            if(err) throw err;
+                            //Change the password to the hash
+                            newUser.password = hash
+                            newUser.save()
+                                .then(user => {
+                                    req.flash('success_msg', 'You are now registered and can log in')
+                                    res.redirect('/users/login')
+                                })
+                                .catch(err => {
+                                    console.log(err);
+                                    return;
+                                })
+                        })
+                    })
+                }
+            })
+    }
+
+});
+
+
+app.get('/users/login', (req, res)=>{
+    //console.log(req.user)
+    res.render('users/login');
+})
+
+// Login Form Post
+app.post('/users/login', (req, res, next) =>{
+    passport.authenticate('local', {
+        successRedirect:'/',
+        failureRedirect: '/users/login',
+        failureFlash:true
+    })(req, res, next);
+});
 
 
 const port = 3000;

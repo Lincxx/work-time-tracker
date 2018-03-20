@@ -16,6 +16,10 @@ const AcquireTime = new Schema({
     },
     class: {
         type:String
+    },
+    user: {
+        type: String, 
+        required: true
     }
 })
 
