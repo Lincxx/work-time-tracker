@@ -79,10 +79,7 @@ app.use(function(req, res, next){
 
 // Routes
 app.get('/', (req, res)=>{
-   //AcquireTime.find()
-    console.log(req.user.id)
     let today = moment().format('LL');
-    console.log(today)
     res.render('home', {today: today});
 });
 
@@ -97,11 +94,11 @@ app.post('/addTime', ensureAuthenticated, (req, res) => {
         user: req.user.id
     });
 
-    res.send("there");
-    // new AcquireTime(newAcquireTime).save()
-    //     .then(item =>{
-    //         res.redirect('/showDates');
-    //     })
+    //res.send("there");
+    new AcquireTime(newAcquireTime).save()
+        .then(item =>{
+            res.redirect('/showDates');
+        })
 });
 
 //Show all 
@@ -195,6 +192,13 @@ app.post('/users/login', (req, res, next) =>{
         failureRedirect: '/users/login',
         failureFlash:true
     })(req, res, next);
+});
+
+// Logout user
+app.get('/logout', (req, res) =>{
+    req.logout();
+    req.flash('success_msg', 'You are logged out')
+    res.redirect('/')
 });
 
 

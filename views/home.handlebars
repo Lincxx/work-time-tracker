@@ -12,6 +12,7 @@
             </p>
         </div>
     </div>
+    {{#if user}}
     <div class="container form-container">
         <form action="/addTime" method="POST">
             <div class="form-group">
@@ -25,5 +26,7 @@
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
     </div>
+    {{else}}
+    {{/if}}
 
 </main>
